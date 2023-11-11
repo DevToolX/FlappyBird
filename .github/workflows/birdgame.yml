@@ -1,0 +1,6 @@
+name: BirdGame
+
+run-name: ${{ github.actor }} is learning GitHub Actions
+
+on: [push]
+
