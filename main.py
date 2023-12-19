@@ -111,6 +111,40 @@ def get_random_pipes(xpos):
     return pipe, pipe_inverted
 
 
+
+class Score:
+    def __init__(self):
+        self.score = 0
+        self.high_score = self.load_high_score()
+
+    def load_high_score(self):
+        try:
+            with open("highscore.txt", "r") as file:
+                return int(file.read())
+        except FileNotFoundError:
+            # If the file does not exist, return 0 as the default high score
+            return 0
+
+    def update_score(self):
+        self.score += 1
+
+    def reset_score(self):
+        if self.score > self.high_score:
+            self.high_score = self.score
+            self.save_high_score()
+
+        self.score = 0
+
+    def save_high_score(self):
+        with open("highscore.txt", "w") as file:
+            file.write(str(self.high_score))
+
+    def display_score(self, screen):
+        font = pygame.font.Font(None, 36)
+        score_text = font.render(f"Score: {self.score}  High Score: {self.high_score}", True, (255, 255, 255))
+        screen.blit(score_text, (10, 10))
+
+
 pygame.init()
 screen = pygame.display.set_mode((SCREEN_WIDHT, SCREEN_HEIGHT))
 pygame.display.set_caption('Flappy Bird')
@@ -173,8 +207,11 @@ while begin:
     pygame.display.update()
 
 
-while True:
 
+
+score_manager = Score()
+
+while True:
     clock.tick(15)
 
     for event in pygame.event.get():
@@ -190,16 +227,13 @@ while True:
 
     if is_off_screen(ground_group.sprites()[0]):
         ground_group.remove(ground_group.sprites()[0])
-
         new_ground = Ground(GROUND_WIDHT - 20)
         ground_group.add(new_ground)
 
     if is_off_screen(pipe_group.sprites()[0]):
         pipe_group.remove(pipe_group.sprites()[0])
         pipe_group.remove(pipe_group.sprites()[0])
-
         pipes = get_random_pipes(SCREEN_WIDHT * 2)
-
         pipe_group.add(pipes[0])
         pipe_group.add(pipes[1])
 
@@ -211,11 +245,15 @@ while True:
     pipe_group.draw(screen)
     ground_group.draw(screen)
 
+    score_manager.update_score()
+    score_manager.display_score(screen)
+
     pygame.display.update()
 
     if (pygame.sprite.groupcollide(bird_group, ground_group, False, False, pygame.sprite.collide_mask) or
             pygame.sprite.groupcollide(bird_group, pipe_group, False, False, pygame.sprite.collide_mask)):
         pygame.mixer.music.load(hit)
         pygame.mixer.music.play()
+        score_manager.reset_score()
         time.sleep(1)
         break
